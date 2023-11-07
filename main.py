@@ -35,7 +35,7 @@ def sp_encrypt(plaintext, s_boxes, p_box):
     # Iterate through the plaintext array in chunks of block_size
     block_size = len(p_box)
     for i in range(0, len(plaintext_array), block_size):
-        block = plaintext_array[i:i+block_size]
+        block = plaintext_array[i:i + block_size]
 
         # Perform the SP-network encryption for each round
         for round_idx in range(num_rounds):
@@ -48,7 +48,7 @@ def sp_encrypt(plaintext, s_boxes, p_box):
             block = block[p_box]
 
         # Store the encrypted block in the ciphertext array
-        ciphertext_array[i:i+block_size] = block
+        ciphertext_array[i:i + block_size] = block
 
     # Convert the ciphertext array back to a 2D image
     ciphertext_image = np.reshape(ciphertext_array, plaintext.shape)
@@ -74,7 +74,7 @@ def sp_decrypt(ciphertext, s_boxes, p_box):
     # Iterate through the ciphertext array in chunks of block_size
     block_size = len(p_box)
     for i in range(0, len(ciphertext_array), block_size):
-        block = ciphertext_array[i:i+block_size]
+        block = ciphertext_array[i:i + block_size]
 
         # Perform the SP-network decryption for each round
         for round_idx in reversed(range(num_rounds)):
@@ -87,13 +87,12 @@ def sp_decrypt(ciphertext, s_boxes, p_box):
                 block[j] = inv_s_box[block[j]]
 
         # Store the decrypted block in the plaintext array
-        plaintext_array[i:i+block_size] = block
+        plaintext_array[i:i + block_size] = block
 
     # Convert the plaintext array back to a 2D image
     plaintext_image = np.reshape(plaintext_array, ciphertext.shape)
 
     return plaintext_image
-
 
 
 def correlation_test(image):
@@ -153,31 +152,69 @@ def brightness_histogram(image):
     plt.show()
 
 
-correlation_horizontal, correlation_vertical = correlation_test(image)
-print(f"Horizontal correlation: {correlation_horizontal}")
-print(f"Vertical correlation: {correlation_vertical}")
-
-grid_diff = grid_test(image)
-print(f"Grid difference is {grid_diff}")
-brightness_histogram(image)
-
 # Encrypt and decrypt the image using the previously defined sp_encrypt and sp_decrypt functions
 encrypted_image = sp_encrypt(image, s_boxes, p_box)
 decrypted_image = sp_decrypt(encrypted_image, s_boxes, p_box)
 
-# Display the original, encrypted, and decrypted images
-plt.figure(figsize=(15, 5))
+# Perform correlation tests
+orig_corr_horizontal, orig_corr_vertical = correlation_test(image)
+encr_corr_horizontal, encr_corr_vertical = correlation_test(encrypted_image)
+decr_corr_horizontal, decr_corr_vertical = correlation_test(decrypted_image)
 
-plt.subplot(1, 3, 1)
+# Perform grid tests
+grid_size = (8, 8)
+orig_grid_difference = grid_test(image, grid_size)
+encr_grid_difference = grid_test(encrypted_image, grid_size)
+decr_grid_difference = grid_test(decrypted_image, grid_size)
+
+# Display the original, encrypted, and decrypted images along with their brightness histograms,
+# correlation test results, and grid test results
+plt.figure(figsize=(18, 12))
+
+# Original image
+plt.subplot(3, 3, 1)
 plt.imshow(image, cmap='gray')
-plt.title('Original Image')
+plt.title(f'Original Image\nHorizontal Corr: {orig_corr_horizontal:.2f}, Vertical Corr: {orig_corr_vertical:.2f}')
 
-plt.subplot(1, 3, 2)
+# Encrypted image
+plt.subplot(3, 3, 2)
 plt.imshow(encrypted_image, cmap='gray')
-plt.title('Encrypted Image')
+plt.title(f'Encrypted Image\nHorizontal Corr: {encr_corr_horizontal:.2f}, Vertical Corr: {encr_corr_vertical:.2f}')
 
-plt.subplot(1,3, 3)
+# Decrypted image
+plt.subplot(3, 3, 3)
 plt.imshow(decrypted_image, cmap='gray')
-plt.title('Decrypted Image')
+plt.title(f'Decrypted Image\nHorizontal Corr: {decr_corr_horizontal:.2f}, Vertical Corr: {decr_corr_vertical:.2f}')
 
+# Brightness histogram for the original image
+plt.subplot(3, 3, 4)
+plt.hist(image.ravel(), 256, (0, 256))
+plt.title('Original Image Brightness Histogram')
+
+# Brightness histogram for the encrypted image
+plt.subplot(3, 3, 5)
+plt.hist(encrypted_image.ravel(), 256, (0, 256))
+plt.title('Encrypted Image Brightness Histogram')
+
+# Brightness histogram for the decrypted image
+plt.subplot(3, 3, 6)
+plt.hist(decrypted_image.ravel(), 256, (0, 256))
+plt.title('Decrypted Image Brightness Histogram')
+
+# Grid test for the original image
+plt.subplot(3, 3, 7)
+plt.imshow(orig_grid_difference, cmap='hot', interpolation='nearest')
+plt.title('Original Image Grid Test')
+
+# Grid test for the encrypted image
+plt.subplot(3, 3, 8)
+plt.imshow(encr_grid_difference, cmap='hot', interpolation='nearest')
+plt.title('Encrypted Image Grid Test')
+
+# Grid test for the decrypted image
+plt.subplot(3, 3, 9)
+plt.imshow(decr_grid_difference, cmap='hot', interpolation='nearest')
+plt.title('Decrypted Image Grid Test')
+
+plt.tight_layout()
 plt.show()
